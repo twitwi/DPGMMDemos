@@ -1,3 +1,5 @@
+
+
 #define MAXTOPIC 512
 
 int drawFromProportionalMultinomial(const float* prob, float rand) {
@@ -10,7 +12,7 @@ int drawFromProportionalMultinomial(const float* prob, float rand) {
 }
 
 float basicGaussian(float x) {
-    const float gaussDenominator = 2.5066282;//sqrt(2 * PI) = 2.5066282746310005024157652848110452530069867406099383;
+    float gaussDenominator = 2.5066282; /* sqrt( 2 PI ) = 2.5066282746310005024157652848110452530069867406099383 */
     return exp(-x * x / 2) / gaussDenominator;
 }
 float gaussian(float x, float mu, float stddev) {
@@ -43,7 +45,7 @@ __kernel void compute_updates(
     for (int k = 0; k < MAXTOPIC; k++) p[k] = 0;
 
     for (int k = 0; k < componentCount; k++) {
-        const int statsOffset = k*(1 + 2 * dimension);
+        int statsOffset = k*(1 + 2 * dimension);
         if (k == oldZ) {
             float nObsOfK = stats[statsOffset+0] - 1;
             p[k] = nObsOfK;
@@ -100,9 +102,9 @@ __kernel void apply_updates(
     int nUpdates,
     int dimension)
 {
-    const int k = get_global_id(0);
+    int k = get_global_id(0);
     if (k > limit) return; // NB: k==limit means "new component"
-    const int statsOffset = k*(1 + 2 * dimension);
+    int statsOffset = k*(1 + 2 * dimension);
     int nextComponent = limit;
     
     // TODO: try perf with this for loop in each of the if cases below

@@ -26,6 +26,7 @@ public class GibbsSamplerWithCL extends GibbsSampler {
     CLBuffer<Float> clObs = null;
     CLBuffer<Float> clStats;
     CLBuffer<Integer> clZ;
+    int clComponentCount = -111;
 
     /*
      * = context.createFloatBuffer(CLMem.Usage.InputOutput, n), // a and b and
@@ -51,18 +52,41 @@ public class GibbsSamplerWithCL extends GibbsSampler {
             throw new IllegalStateException("In opencl mode but opencl not up to date...");
         }
         // do the iteration on the OpenCL device
-        int componentCount = 10; // count before any change // TODO find it ...
         final int nUpdates = 1000;
-        
         CLBuffer<Integer> clUpdates = context.createIntBuffer(CLMem.Usage.InputOutput, nUpdates);
-        CLEvent draw = null;//kernels.compute_updates();
-        CLEvent apply = kernels.apply_updates(queue, clObs, clUpdates, clStats, clZ, componentCount, nUpdates, dimension, only(componentCount + 1), null, draw);
-        //TODO reduce/repack
-        //queue.flush();
-        queue.finish();
+        for (int fromObservationIndex = 0; fromObservationIndex < observationCount; fromObservationIndex += nUpdates) {
+            CLBuffer<Float> clRand;
+            { // send some random value to the gpu
+                Pointer<Float> tmp = Pointer.allocateFloats(nUpdates).order(context.getByteOrder());
+                int c = 0;
+                for (int i = 0; i < nUpdates; i++) {
+                    tmp.set(c++, (float) Math.random());
+                }
+                clRand = context.createFloatBuffer(CLMem.Usage.Input, tmp);
+            }
+            CLEvent draw = kernels.compute_updates(queue, clObs, clStats, clZ, clUpdates, clRand, cl(fixedSigmaDiag), cl(hMu0), cl(hSigma0Diag), dimension, (float) alpha, clComponentCount, fromObservationIndex, observationCount, only(nUpdates), null);
+            CLEvent apply = kernels.apply_updates(queue, clObs, clUpdates, clStats, clZ, clComponentCount, nUpdates, dimension, only(clComponentCount + 1), null, draw);
+            //queue.flush();
+            //queue.finish();
+            Pointer<Integer> outPtr = clZ.read(queue, apply);
+            // refind the highest used z
+            clComponentCount = -111;
+            for (int k = 0; k < GMMKernels.MAXTOPIC; k++) {
+                clComponentCount = Math.max(clComponentCount, outPtr.get(k)+1);
+            }
+            //TODO reduce/repack
+        }
         // java state is now outdated
         javaIsUptodate = false;
 
+    }
+
+    private CLBuffer<Float> cl(double[] arr) {
+        Pointer<Float> tmp = Pointer.allocateFloats(arr.length).order(context.getByteOrder());
+        for (int i = 0; i < arr.length; i++) {
+            tmp.set(i, (float) arr[i]);
+        }
+        return context.createFloatBuffer(CLMem.Usage.Input, tmp);
     }
 
     private int[] only(int i) {
@@ -105,7 +129,7 @@ public class GibbsSamplerWithCL extends GibbsSampler {
         lazyInitOpenCL();
         final ByteOrder byteOrder = context.getByteOrder();
         final int sizeOfObservationTable = dimension * observationCount;
-        final int sizeOfStatsTable = (2 * dimension + 1) * observationCount;
+        final int sizeOfStatsTable = (2 * dimension + 1) * GMMKernels.MAXTOPIC; //;(2 * dimension + 1) * observationCount;
 
 
         if (clObs == null) { // pack and transfer observations
@@ -121,7 +145,9 @@ public class GibbsSamplerWithCL extends GibbsSampler {
         { // same for the stats
             Pointer<Float> statsPtr = Pointer.allocateFloats(sizeOfStatsTable).order(byteOrder);
             int c = 0;
+            clComponentCount = 0;
             for (PerTopicTabling t : stats) {
+                clComponentCount++;
                 statsPtr.set(c++, (float) t.nObs);
                 for (double d : t.sum) {
                     statsPtr.set(c++, (float) d);
