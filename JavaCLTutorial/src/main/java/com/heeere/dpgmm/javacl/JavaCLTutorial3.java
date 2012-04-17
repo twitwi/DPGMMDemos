@@ -4,6 +4,7 @@ import com.nativelibs4java.opencl.*;
 import com.nativelibs4java.opencl.CLMem.Usage;
 import org.bridj.Pointer;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class JavaCLTutorial3 {
 
@@ -15,6 +16,7 @@ public class JavaCLTutorial3 {
 
         for (CLDevice d : context.getDevices()) {
             System.err.println(d.getName());
+            System.err.println(d.getOpenCLVersion());
             System.err.println("");
             System.err.println(d.getLocalMemSize());
             System.err.println(d.getGlobalMemSize());
@@ -22,7 +24,7 @@ public class JavaCLTutorial3 {
             System.err.println("");
             System.err.println(d.getMaxWorkGroupSize());
             System.err.println(d.getMaxWorkItemDimensions());
-            System.err.println(d.getMaxWorkItemSizes());
+            System.err.println(Arrays.toString(d.getMaxWorkItemSizes()));
         }
 
         // Create OpenCL input and output buffers
