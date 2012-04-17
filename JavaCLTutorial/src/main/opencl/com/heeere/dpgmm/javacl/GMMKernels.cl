@@ -1,6 +1,12 @@
 #define MAXTOPIC 512
 
-int drawFromProportionalMultinomial(const float* prob, const float rand) {
+int drawFromProportionalMultinomial(const float* prob, float rand) {
+    int i = 0;
+    while (rand > prob[i]) {
+        rand -= prob[i];
+        i++;
+    }
+    return i;
 }
 
 float basicGaussian(float x) {
