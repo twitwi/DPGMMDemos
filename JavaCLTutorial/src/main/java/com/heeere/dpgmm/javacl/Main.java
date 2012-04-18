@@ -13,22 +13,23 @@ import java.util.Random;
  */
 public class Main {
 
+//    WARNING CRASHES, SO DO SOME SMALLER TEST (TEST SUBPARTS)
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         int dim = 2; // the GMM can be in higher dimension (than 2) but the display will display the first 2 dimensions
         int nGauss = 10;
-        int nSamples = 10000;
-        double alpha = .1;
+        int nSamples = 100;
+        double alpha = 0.1;
         double[] hMu0 = new double[]{.5, .5, .5, .5}; // prior on mean: centered in the middle of the space
         double[] hSigma0Diag = new double[]{.15, .15, .15, .15}; // prior on mean: broad variance
         double size = .045; // the real ones are actually between 0.02 and 0.05
         double[] fixedSigmaDiag = new double[]{size, size, size, size};
         squareEachOf(hSigma0Diag);
         squareEachOf(fixedSigmaDiag);
-        
-        Random fixedRandomOrNull = null; //new Random(0xFEED); // <- you can use a fixed random to fix the generated datapoints
+
+        Random fixedRandomOrNull = new Random(0xFEED); // <- you can use a fixed random to fix the generated datapoints
 
         if (args.length > 0) {
             if (args.length != 3) {
@@ -41,7 +42,8 @@ public class Main {
             alpha = Double.parseDouble(args[2]);
         }
 
-        GibbsSampler g = new GibbsSampler();
+        //GibbsSampler g = new GibbsSampler();
+        GibbsSamplerWithCL g = new GibbsSamplerWithCL();
         if (fixedRandomOrNull != null) {
             g.setRandom(fixedRandomOrNull);
         }
@@ -60,11 +62,15 @@ public class Main {
         w.addRenderable(g.getWeigtedTopicsDisplay().name("(" + iter + ")"));
         System.err.println(iter + " " + (System.currentTimeMillis() - start));
 
+        g.switchToOpenCL();
+
         for (int i = 0; i < 400; i++) {
             int dIter = 1;
             iter += dIter;
             for (int j = 0; j < dIter; j++) {
                 g.doDirichletProcessEstimation(alpha, fixedSigmaDiag, hMu0, hSigma0Diag);
+                g.switchBackToJava();
+                g.switchToOpenCL();
             }
             w.addRenderable(g.getWeigtedTopicsDisplay().name("(" + iter + ")"));
             System.err.println(iter + " " + (System.currentTimeMillis() - start));

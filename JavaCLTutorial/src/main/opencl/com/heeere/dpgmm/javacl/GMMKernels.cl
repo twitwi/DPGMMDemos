@@ -1,6 +1,6 @@
 
 
-#define MAXTOPIC 512
+#define MAXTOPIC 1024
 
 int drawFromProportionalMultinomial(const float* prob, float rand) {
     int i = 0;
@@ -40,7 +40,7 @@ __kernel void compute_updates(
 
     int oldZ = z[iObs];
     
-    float p[MAXTOPIC];
+    private float p[MAXTOPIC];
     float sum = 0;
     for (int k = 0; k < MAXTOPIC; k++) p[k] = 0;
 
@@ -85,7 +85,7 @@ __kernel void compute_updates(
             float sigma = hSigma0Diag[c] + fixedSigmaDiag[c];
             p[componentCount] *= gaussian(x, mu, sqrt(sigma));
         }
-        sum = sum + p[componentCount];
+        sum += p[componentCount]*0.99f;
     }
     int newZ = drawFromProportionalMultinomial(p, rand[i]*sum);
     updates[3*i+0] = iObs;
@@ -111,21 +111,21 @@ __kernel void apply_updates(
     for (int i = 0; i < nUpdates; i++) {
         int oldZ = updates[3*i+1];
         int newZ = updates[3*i+2];
+        int iObs = updates[3*i+0];
         if (k == limit) { // new component(s)
             if (newZ == k) {
+                z[iObs] = nextComponent;
                 const int nstatsOffset = nextComponent*(1 + 2 * dimension);
-                int iObs = updates[3*i+0];
                 stats[nstatsOffset+0] = 1;
                 for (int c = 0; c < dimension; c++) {
                     float obsOfC = obs[iObs*dimension + c];
                     stats[nstatsOffset+1+c] = obsOfC;
                     stats[nstatsOffset+1+dimension+c] = obsOfC*obsOfC;
                 }                
-                nextComponent = nextComponent+1;
+                nextComponent += 1;
             }
         } else if (oldZ != newZ) { // existing component
             if (oldZ == k) {
-                int iObs = updates[3*i+0];
                 stats[statsOffset+0] -= 1;
                 for (int c = 0; c < dimension; c++) {
                     float obsOfC = obs[iObs*dimension + c];
@@ -134,7 +134,7 @@ __kernel void apply_updates(
                 }
             }
             if (newZ == k) {
-                int iObs = updates[3*i+0];
+                z[iObs] = newZ;
                 stats[statsOffset+0] += 1;
                 for (int c = 0; c < dimension; c++) {
                     float obsOfC = obs[iObs*dimension + c];

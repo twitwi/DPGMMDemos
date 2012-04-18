@@ -78,8 +78,8 @@ public class ExperimentTrait {
                     double weight = weights[i];
                     g.setColor(weight <= 0.009 ? Color.GRAY : Color.RED);
                     g.translate(topic.mean(0),topic.mean(1));
-                    double w = 2 * topic.stddev(0);
-                    double h = 2 * topic.stddev(1);
+                    double w = 2 *  .045;//topic.stddev(0);
+                    double h = 2 * .045;//topic.stddev(1);
                     g.draw(new Ellipse2D.Double(-w, -h, 2 * w, 2 * h));
                     g.scale(2 * toImage, 2 * toImage);
                     g.drawString(new Formatter().format("%.2f", weight).toString(), 0.f, 0.f);
