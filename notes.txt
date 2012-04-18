@@ -1,0 +1,25 @@
+Current Status (corresponding commit)
+ - it works!
+ - it is designed for manual benchmark
+   - in Main, three controls
+        boolean display = false;
+        boolean switchBack = false; // switch back to java every time for display?
+        g.switchToOpenCL(); <- this can be commented out to do some java
+   - in Main controlling the running set, e.g.,
+        int nSamples = 1000000;
+   - in GibbsSamplerWithCL, adapting for the nSamples (or not, but must be a multiple)
+        final int nUpdates = 100000;
+   - in GibbsSamplerWithCL, not coming back to Java just to count the topics
+     (not really correct but we can probably reach something similar and correct)
+     First uncomment
+        //queue.finish();
+     Then comment
+            Pointer<Integer> tmp = clZ.read(queue, apply);
+            // refind the highest used z
+            clComponentCount = -111;
+            for (int i = 0; i < observationCount; i++) {
+                clComponentCount = Math.max(clComponentCount, tmp.get(i) + 1);
+            }
+ - copy and save the raw output to different files (for diffent setups), e.g. to ,,1 ,,2 ,,3 (3 files)
+ - use gnuplot to visualize, e.g., gnuplot:
+       plot "./,,1" u 1:2 with linespoints, "./,,2" u 1:2 with linespoints, "./,,3" u 1:2 with linespoints;

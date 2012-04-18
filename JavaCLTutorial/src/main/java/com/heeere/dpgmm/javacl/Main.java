@@ -20,8 +20,8 @@ public class Main {
     public static void main(String[] args) {
         int dim = 2; // the GMM can be in higher dimension (than 2) but the display will display the first 2 dimensions
         int nGauss = 10;
-        int nSamples = 100;
-        double alpha = 0.1;
+        int nSamples = 1000000;
+        double alpha = .01;
         double[] hMu0 = new double[]{.5, .5, .5, .5}; // prior on mean: centered in the middle of the space
         double[] hSigma0Diag = new double[]{.15, .15, .15, .15}; // prior on mean: broad variance
         double size = .045; // the real ones are actually between 0.02 and 0.05
@@ -62,17 +62,23 @@ public class Main {
         w.addRenderable(g.getWeigtedTopicsDisplay().name("(" + iter + ")"));
         System.err.println(iter + " " + (System.currentTimeMillis() - start));
 
+        boolean display = false;
+        boolean switchBack = false; // switch back to java every time for display?
         g.switchToOpenCL();
 
-        for (int i = 0; i < 400; i++) {
+        for (int i = 0; i < 200; i++) {
             int dIter = 1;
             iter += dIter;
             for (int j = 0; j < dIter; j++) {
                 g.doDirichletProcessEstimation(alpha, fixedSigmaDiag, hMu0, hSigma0Diag);
-                g.switchBackToJava();
-                g.switchToOpenCL();
             }
-            w.addRenderable(g.getWeigtedTopicsDisplay().name("(" + iter + ")"));
+            if (display) {
+                if (switchBack) {
+                    g.switchBackToJava();
+                    g.switchToOpenCL();
+                }
+                w.addRenderable(g.getWeigtedTopicsDisplay().name("(" + iter + ")"));
+            }
             System.err.println(iter + " " + (System.currentTimeMillis() - start));
         }
         for (int i = 0; i < 100; i++) {
@@ -81,7 +87,13 @@ public class Main {
             for (int j = 0; j < dIter; j++) {
                 g.doDirichletProcessEstimation(alpha, fixedSigmaDiag, hMu0, hSigma0Diag);
             }
-            w.addRenderable(g.getWeigtedTopicsDisplay().name("Fast (" + iter + ")"));
+            if (display) {
+                if (switchBack) {
+                    g.switchBackToJava();
+                    g.switchToOpenCL();
+                }
+                w.addRenderable(g.getWeigtedTopicsDisplay().name("Fast (" + iter + ")"));
+            }
             System.err.println(iter + " " + (System.currentTimeMillis() - start));
         }
         w.title("Done");

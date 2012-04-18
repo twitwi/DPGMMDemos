@@ -19,12 +19,17 @@ float gaussian(float x, float mu, float stddev) {
     return basicGaussian((x - mu) / stddev) / stddev;
 }
 
+#define WRITE_DRAW_TO_DEBUG 0
+
 __kernel void compute_updates(
     __global const float* obs,
     __global const float* stats,
     __global const int* z,
     __global int* updates,
     __global float* rand,
+    #if WRITE_DRAW_TO_DEBUG == 1
+    __global float* debug,
+    #endif
     __constant const float* fixedSigmaDiag,
     __constant const float* hMu0,
     __constant const float* hSigma0Diag,
@@ -54,7 +59,7 @@ __kernel void compute_updates(
                 float sumC = stats[statsOffset+1+c] - x;
                 //
                 float sigma0Prime = 1. / (1. / hSigma0Diag[c] + nObsOfK * 1. / fixedSigmaDiag[c]);
-                float mu0Prime = sigma0Prime * (1. / hSigma0Diag[c] * hMu0[c] + nObsOfK * 1. / fixedSigmaDiag[c] * sumC / nObsOfK);
+                float mu0Prime = sigma0Prime * (1. / hSigma0Diag[c] * hMu0[c] + 1. / fixedSigmaDiag[c] * sumC);
                 // 
                 float mu = mu0Prime;
                 float sigma = sigma0Prime + fixedSigmaDiag[c];
@@ -68,7 +73,7 @@ __kernel void compute_updates(
                 float sumC = stats[statsOffset+1+c];
                 //
                 float sigma0Prime = 1. / (1. / hSigma0Diag[c] + nObsOfK * 1. / fixedSigmaDiag[c]);
-                float mu0Prime = sigma0Prime * (1. / hSigma0Diag[c] * hMu0[c] + nObsOfK * 1. / fixedSigmaDiag[c] * sumC / nObsOfK);
+                float mu0Prime = sigma0Prime * (1. / hSigma0Diag[c] * hMu0[c] + 1. / fixedSigmaDiag[c] * sumC);
                 // 
                 float mu = mu0Prime;
                 float sigma = sigma0Prime + fixedSigmaDiag[c];
@@ -91,6 +96,9 @@ __kernel void compute_updates(
     updates[3*i+0] = iObs;
     updates[3*i+1] = oldZ;
     updates[3*i+2] = newZ;
+    #if WRITE_DRAW_TO_DEBUG == 1
+    for (int k = 0; k < MAXTOPIC; k++) debug[MAXTOPIC*i+k] = p[k];
+    #endif
 }
 
 __kernel void apply_updates(

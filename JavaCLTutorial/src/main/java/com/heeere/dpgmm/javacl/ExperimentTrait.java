@@ -76,6 +76,10 @@ public class ExperimentTrait {
                 for (int i = 0; i < stats.size(); i++) {
                     PerTopicTabling topic = stats.get(i);
                     double weight = weights[i];
+                    if (topic.nObs == 0) {
+                        // cleanly handle (ignoring) empty topics
+                        continue;
+                    }
                     g.setColor(weight <= 0.009 ? Color.GRAY : Color.RED);
                     g.translate(topic.mean(0),topic.mean(1));
                     double w = 2 *  .045;//topic.stddev(0);

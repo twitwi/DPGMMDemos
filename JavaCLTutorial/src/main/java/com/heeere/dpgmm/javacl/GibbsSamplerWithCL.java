@@ -5,8 +5,11 @@
 package com.heeere.dpgmm.javacl;
 
 import com.nativelibs4java.opencl.*;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.ByteOrder;
+import java.util.Formatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bridj.Pointer;
@@ -51,27 +54,55 @@ public class GibbsSamplerWithCL extends GibbsSampler {
         if (!openclIsUptodate) {
             throw new IllegalStateException("In opencl mode but opencl not up to date...");
         }
+        //queue.finish();
         // do the iteration on the OpenCL device
-        final int nUpdates = 10; // TODO avoid the need for the z size to be a multiple of this
-        CLBuffer<Integer> clUpdates = context.createIntBuffer(CLMem.Usage.InputOutput, nUpdates);
+        final int nUpdates = 100000; // TODO avoid the need for the z size to be a multiple of this
+        CLBuffer<Integer> clUpdates = context.createIntBuffer(CLMem.Usage.InputOutput, nUpdates * 3);
+        //CLBuffer<Float> clDBG = context.createFloatBuffer(CLMem.Usage.InputOutput, nUpdates * GMMKernels.MAXTOPIC); // unfreed, just for testing
         CLBuffer<Float> clFixedSigmaDiag = cl(fixedSigmaDiag);
         CLBuffer<Float> clHMu0 = cl(hMu0);
         CLBuffer<Float> clHSigma0Diag = cl(hSigma0Diag);
         for (int fromObservationIndex = 0; fromObservationIndex < observationCount; fromObservationIndex += nUpdates) {
             CLBuffer<Float> clRand;
             { // send some random value to the gpu
-                Pointer<Float> tmp = Pointer.allocateFloats(nUpdates).order(context.getByteOrder());
+                Pointer<Float> rand = Pointer.allocateFloats(nUpdates).order(context.getByteOrder());
                 int c = 0;
                 for (int i = 0; i < nUpdates; i++) {
-                    tmp.set(c++, (float) Math.random());
+                    rand.set(c++, (float) Math.random());
                 }
-                clRand = context.createFloatBuffer(CLMem.Usage.Input, tmp);
+                clRand = context.createFloatBuffer(CLMem.Usage.Input, rand);
             }
-
-            CLEvent draw = kernels.compute_updates(queue, clObs, clStats, clZ, clUpdates, clRand,clFixedSigmaDiag, clHMu0, clHSigma0Diag, dimension, (float) alpha, clComponentCount, fromObservationIndex, observationCount, only(nUpdates), null);
+            CLEvent draw = kernels.compute_updates(queue, clObs, clStats, clZ, clUpdates, clRand, clFixedSigmaDiag, clHMu0, clHSigma0Diag, dimension, (float) alpha, clComponentCount, fromObservationIndex, observationCount, only(nUpdates), null);
+            // clDBG goes just after clRand
             CLEvent apply = kernels.apply_updates(queue, clObs, clUpdates, clStats, clZ, clComponentCount, nUpdates, dimension, only(clComponentCount + 1), null, draw);
-            //queue.flush();
-            //queue.finish();
+            /*{
+                PrintStream out = null;
+                try {
+                    Pointer<Integer> up = clUpdates.read(queue, draw);
+                    out = new PrintStream("/tmp/update-" + nIter);
+                    for (int i = 0; i < nUpdates; i++) {
+                        out.println(up.get(3 * i + 0) + " " + up.get(3 * i + 1) + " " + up.get(3 * i + 2));
+                    }
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(GibbsSamplerWithCL.class.getName()).log(Level.SEVERE, null, ex);
+                } finally {
+                    out.close();
+                }
+                try {
+                    Pointer<Float> dbg = clDBG.read(queue, draw);
+                    out = new PrintStream("/tmp/draw-" + nIter);
+                    for (int i = 0; i < nUpdates; i++) {
+                        for (int k = 0; k < GMMKernels.MAXTOPIC; k++) {
+                            out.print(dbg.get(i * GMMKernels.MAXTOPIC + k) + " ");
+                        }
+                        out.println();
+                    }
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(GibbsSamplerWithCL.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                nIter++;
+            }*/
+
             Pointer<Integer> tmp = clZ.read(queue, apply);
             // refind the highest used z
             clComponentCount = -111;
@@ -80,7 +111,7 @@ public class GibbsSamplerWithCL extends GibbsSampler {
             }
             tmp.release();
             clRand.release();
-            //System.err.println(" "+clComponentCount);
+            //System.err.println("   "+clComponentCount);
             //TODO reduce/repack
         }
         clFixedSigmaDiag.release();
@@ -91,6 +122,7 @@ public class GibbsSamplerWithCL extends GibbsSampler {
         javaIsUptodate = false;
 
     }
+    int nIter = 0;
 
     private CLBuffer<Float> cl(double[] arr) {
         Pointer<Float> tmp = Pointer.allocateFloats(arr.length).order(context.getByteOrder());
@@ -134,7 +166,6 @@ public class GibbsSamplerWithCL extends GibbsSampler {
             Pointer<Float> tmp = clStats.read(queue);
             int c = 0;
             stats.clear();
-            System.err.println(clComponentCount);
             for (int k = 0; k < clComponentCount; k++) {
                 PerTopicTabling t = new PerTopicTabling(dimension);
                 t.nObs = (int) (float) tmp.get(c++);
