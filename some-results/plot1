@@ -1,4 +1,15 @@
-plot "./alien-java-dim-10" u 1:2 with linespoints, "./alien-cl-dim-10" u 1:2 with linespoints, "./alien-cl-dim-20" u 1:($2-4100) with linespoints, "./alien-cl-dim-100" u 1:($2-36500) with linespoints, "./alien-cl-dim-100-wrong-approx" u 1:($2-35800) with linespoints, "./alien-cl-dim-100-fair-approx" u 1:($2-35300) with linespoints;
+
+set key bottom left;
+set yrange [0:30000]
+
+plot "./alien-java-dim-10" u 1:2 with lines, \
+     "./sshdynamix-java-dim-10" u 1:2 with lines, \
+     "./alien-cl-dim-10" u 1:2 with linespoints, \
+     "./alien-cl-dim-20" u 1:($2-4100) with linespoints, \
+     "./alien-cl-dim-100" u 1:($2-36500) with linespoints, \
+     "./alien-cl-dim-100-wrong-approx" u 1:($2-35800) with linespoints, \
+     "./alien-cl-dim-100-fair-approx" u 1:($2-35300) with linespoints, \
+     "./sshdynamix-cl-dim-100" u 1:($2-14500) with linespoints;
 
 pause mouse;
 

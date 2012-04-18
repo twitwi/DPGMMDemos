@@ -27,23 +27,45 @@ skip non existing resourceDirectory /home/twilight/projects/DPGMMDemos/JavaCLTut
 Copying 3 resources
 
 [compiler:compile]
-Compiling 1 source file to /home/twilight/projects/DPGMMDemos/JavaCLTutorial/target/classes
+Compiling 2 source files to /home/twilight/projects/DPGMMDemos/JavaCLTutorial/target/classes
 
 [exec:exec]
-1 5187
-2 9954
-3 13705
-4 17471
-5 21232
-6 25288
-7 29453
-8 33395
-9 37256
-10 41107
+1 5207
+2 7285
+3 7590
+4 7883
+5 8178
+6 8458
+7 8729
+8 9020
+9 9292
+10 9582
+11 9857
+12 10122
+13 10404
+14 10699
+15 10956
+16 11248
+17 11536
+18 11872
+19 12153
+20 12438
+21 12716
+22 13016
+23 13292
+24 13567
+25 13840
+26 14103
+27 14371
+28 14649
+29 14916
+30 15211
+31 15483
+32 15771
 ------------------------------------------------------------------------
 BUILD SUCCESS
 ------------------------------------------------------------------------
-Total time: 51.731s
-Finished at: Wed Apr 18 22:40:30 CEST 2012
-Final Memory: 17M/173M
+Total time: 24.714s
+Finished at: Wed Apr 18 22:38:02 CEST 2012
+Final Memory: 18M/171M
 ------------------------------------------------------------------------
