@@ -54,7 +54,6 @@ public class GibbsSamplerWithCL extends GibbsSampler {
         if (!openclIsUptodate) {
             throw new IllegalStateException("In opencl mode but opencl not up to date...");
         }
-        //queue.finish();
         // do the iteration on the OpenCL device
         final int nUpdates = 10000; // TODO avoid the need for the z size to be a multiple of this
         CLBuffer<Integer> clUpdates = context.createIntBuffer(CLMem.Usage.InputOutput, nUpdates * 3);
@@ -63,6 +62,7 @@ public class GibbsSamplerWithCL extends GibbsSampler {
         CLBuffer<Float> clHMu0 = cl(hMu0);
         CLBuffer<Float> clHSigma0Diag = cl(hSigma0Diag);
         for (int fromObservationIndex = 0; fromObservationIndex < observationCount; fromObservationIndex += nUpdates) {
+            //queue.finish();
             CLBuffer<Float> clRand;
             { // send some random value to the gpu
                 Pointer<Float> rand = Pointer.allocateFloats(nUpdates).order(context.getByteOrder());
