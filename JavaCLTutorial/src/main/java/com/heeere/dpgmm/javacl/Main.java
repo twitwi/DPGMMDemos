@@ -5,6 +5,7 @@
 package com.heeere.dpgmm.javacl;
 
 import com.heeere.dpgmm.utilities.RenderableStackViewer;
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -18,9 +19,9 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        int dim = 2; // the GMM can be in higher dimension (than 2) but the display will display the first 2 dimensions
-        int nGauss = 10;
-        int nSamples = 1000000;
+        int dim = 100; // the GMM can be in higher dimension (than 2) but the display will display the first 2 dimensions
+        int nGauss = 20;
+        int nSamples = 100000;
         double alpha = .01;
         double[] hMu0 = repeat(.5, dim); // prior on mean: centered in the middle of the space
         double[] hSigma0Diag = repeat(.15,dim); // prior on mean: broad variance

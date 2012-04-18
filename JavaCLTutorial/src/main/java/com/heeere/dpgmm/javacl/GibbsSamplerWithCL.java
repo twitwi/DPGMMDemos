@@ -56,7 +56,7 @@ public class GibbsSamplerWithCL extends GibbsSampler {
         }
         //queue.finish();
         // do the iteration on the OpenCL device
-        final int nUpdates = 100000; // TODO avoid the need for the z size to be a multiple of this
+        final int nUpdates = 10000; // TODO avoid the need for the z size to be a multiple of this
         CLBuffer<Integer> clUpdates = context.createIntBuffer(CLMem.Usage.InputOutput, nUpdates * 3);
         //CLBuffer<Float> clDBG = context.createFloatBuffer(CLMem.Usage.InputOutput, nUpdates * GMMKernels.MAXTOPIC); // unfreed, just for testing
         CLBuffer<Float> clFixedSigmaDiag = cl(fixedSigmaDiag);

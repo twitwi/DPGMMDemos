@@ -1,0 +1,4 @@
+plot "./alien-java-dim-10" u 1:2 with linespoints, "./alien-cl-dim-10" u 1:2 with linespoints, "./alien-cl-dim-20" u 1:($2-4000) with linespoints, "./alien-cl-dim-100" u 1:($2-37000) with linespoints;
+
+pause mouse;
+

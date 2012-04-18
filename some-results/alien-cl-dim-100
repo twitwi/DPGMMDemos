@@ -1,0 +1,70 @@
+cd /home/twilight/projects/DPGMMDemos/JavaCLTutorial; JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64 /home/twilight/app/netbeans-7.1/java/maven/bin/mvn "-Dexec.args=-classpath %classpath com.heeere.dpgmm.javacl.Main" -Dexec.executable=/usr/lib/jvm/java-7-openjdk-amd64/bin/java -Dexec.classpathScope=runtime process-classes org.codehaus.mojo:exec-maven-plugin:1.2:exec
+Scanning for projects...
+                                                                        
+------------------------------------------------------------------------
+Building JavaCL Tutorial 1.0-SNAPSHOT
+------------------------------------------------------------------------
+
+[enforcer:enforce]
+
+>>> maven-javacl-plugin:1.0.0-RC2:compile (default) @ DPGMMJavaCL >>>
+
+[enforcer:enforce]
+
+<<< maven-javacl-plugin:1.0.0-RC2:compile (default) @ DPGMMJavaCL <<<
+
+[javacl:compile]
+Found 3 files in /home/twilight/projects/DPGMMDemos/JavaCLTutorial/src/main/opencl
+File TutorialKernels.cl is up-to-date. Skipping generation.
+File TutorialKernelsDouble.cl is up-to-date. Skipping generation.
+File GMMKernels.cl is up-to-date. Skipping generation.
+Found 0 files in /home/twilight/projects/DPGMMDemos/JavaCLTutorial/src/test/opencl
+
+[resources:resources]
+[debug] execute contextualize
+Using 'UTF-8' encoding to copy filtered resources.
+skip non existing resourceDirectory /home/twilight/projects/DPGMMDemos/JavaCLTutorial/src/main/resources
+Copying 3 resources
+
+[compiler:compile]
+Compiling 1 source file to /home/twilight/projects/DPGMMDemos/JavaCLTutorial/target/classes
+
+[exec:exec]
+1 41744
+2 44155
+3 44838
+4 45505
+5 46180
+6 46853
+7 47529
+8 48193
+9 48876
+10 49553
+11 50230
+12 50900
+13 51575
+14 52261
+15 52925
+16 53594
+17 54261
+18 54930
+19 55599
+20 56263
+21 56956
+22 57639
+23 58322
+24 58988
+25 59660
+26 60353
+27 61030
+28 61696
+29 62361
+30 63022
+31 63687
+------------------------------------------------------------------------
+BUILD SUCCESS
+------------------------------------------------------------------------
+Total time: 1:15.643s
+Finished at: Wed Apr 18 22:43:26 CEST 2012
+Final Memory: 17M/171M
+------------------------------------------------------------------------
