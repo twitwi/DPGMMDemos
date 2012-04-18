@@ -22,10 +22,10 @@ public class Main {
         int nGauss = 10;
         int nSamples = 1000000;
         double alpha = .01;
-        double[] hMu0 = new double[]{.5, .5, .5, .5}; // prior on mean: centered in the middle of the space
-        double[] hSigma0Diag = new double[]{.15, .15, .15, .15}; // prior on mean: broad variance
+        double[] hMu0 = repeat(.5, dim); // prior on mean: centered in the middle of the space
+        double[] hSigma0Diag = repeat(.15,dim); // prior on mean: broad variance
         double size = .045; // the real ones are actually between 0.02 and 0.05
-        double[] fixedSigmaDiag = new double[]{size, size, size, size};
+        double[] fixedSigmaDiag = repeat(size, dim);
         squareEachOf(hSigma0Diag);
         squareEachOf(fixedSigmaDiag);
 
@@ -104,5 +104,11 @@ public class Main {
         for (int i = 0; i < data.length; i++) {
             data[i] *= data[i];
         }
+    }
+
+    private static double[] repeat(double d, int dim) {
+        double[]res=new double[dim];
+        Arrays.fill(res, d);
+        return res;
     }
 }
