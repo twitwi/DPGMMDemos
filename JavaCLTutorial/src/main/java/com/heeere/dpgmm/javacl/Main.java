@@ -19,7 +19,7 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        int dim = 100; // the GMM can be in higher dimension (than 2) but the display will display the first 2 dimensions
+        int dim = 10; // the GMM can be in higher dimension (than 2) but the display will display the first 2 dimensions
         int nGauss = 20;
         int nSamples = 100000;
         double alpha = .01;
@@ -65,7 +65,7 @@ public class Main {
 
         boolean display = false;
         boolean switchBack = false; // switch back to java every time for display?
-        g.switchToOpenCL();
+        //g.switchToOpenCL();
 
         for (int i = 0; i < 200; i++) {
             int dIter = 1;

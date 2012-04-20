@@ -6,6 +6,7 @@ plot "./alien-java-dim-10" u 1:2 with lines, \
      "./dynamix-java-dim-10" u 1:2 with lines, \
      "./sshdynamix-java-dim-10" u 1:2 with lines, \
      "./alien-cl-dim-10" u 1:2 with linespoints, \
+     "./dynamix-cl-dim-10" u 1:2 with linespoints, \
      "./alien-cl-dim-20" u 1:($2-4100) with linespoints, \
      "./alien-cl-dim-100" u 1:($2-36500) with linespoints, \
      "./alien-cl-dim-100-wrong-approx" u 1:($2-35800) with linespoints, \
