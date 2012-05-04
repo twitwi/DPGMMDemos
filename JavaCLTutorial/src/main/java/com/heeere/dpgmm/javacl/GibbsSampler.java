@@ -92,6 +92,7 @@ public class GibbsSampler extends ExperimentTrait {
         }
 
         public double posteriorPredictive(double[] data, double[] fixedSigmaDiag, double[] hMu0, double[] hSigma0Diag) {
+            /*
             double res = 1;
             for (int c = 0; c < data.length; c++) {
                 double x = data[c];
@@ -103,6 +104,22 @@ public class GibbsSampler extends ExperimentTrait {
                 //res *= Stats.evaluateGaussianWithVariance(x, mu, sigma);
                 res *= new NormalDistributionImpl(mu, FastMath.sqrt(sigma)).density(x);
             }
+            /*/
+            double sumD2XMuOverSigma2 = 0;
+            double prodSigma2 = 1;
+            for (int c = 0; c < data.length; c++) {
+                double x = data[c];
+                double sigma0Prime = 1. / (1. / hSigma0Diag[c] + nObs * 1. / fixedSigmaDiag[c]);
+                double mu0Prime = sigma0Prime * (1. / hSigma0Diag[c] * hMu0[c] + nObs * 1. / fixedSigmaDiag[c] * sum[c] / nObs);
+                // 
+                double mu = mu0Prime;
+                double sigma = sigma0Prime + fixedSigmaDiag[c];
+                double d = x - mu;
+                sumD2XMuOverSigma2 += d * d / sigma;
+                prodSigma2 *= sigma;
+            }
+            double res = FastMath.exp(- sumD2XMuOverSigma2 / 2) / Math.sqrt(prodSigma2 * 2 * FastMath.PI);
+            //*/
             return res;
         }
     }
