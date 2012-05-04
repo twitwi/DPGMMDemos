@@ -46,6 +46,7 @@ __kernel void compute_updates(
     int oldZ = z[iObs];
     
     private float p[MAXTOPIC];
+    float twoPi = 6.28318531;
     float sum = 0;
     for (int k = 0; k < MAXTOPIC; k++) p[k] = 0;
 
@@ -54,6 +55,8 @@ __kernel void compute_updates(
         if (k == oldZ) {
             float nObsOfK = stats[statsOffset+0] - 1;
             p[k] = nObsOfK;
+            float sumD2XMuOverSigma2 = 0;
+            float prodSigma2 = 1;
             for (int c = 0; c < dimension; c++) {
                 float x = obs[iObs*dimension + c];
                 float sumC = stats[statsOffset+1+c] - x;
@@ -63,11 +66,17 @@ __kernel void compute_updates(
                 // 
                 float mu = mu0Prime;
                 float sigma = sigma0Prime + fixedSigmaDiag[c];
-                p[k] *= gaussian(x, mu, sqrt(sigma));
+                //
+                float d = x - mu;
+                sumD2XMuOverSigma2 += d * d / sigma;
+                prodSigma2 *= sigma;
             }
+            p[k] *= exp(- sumD2XMuOverSigma2 / 2) / sqrt(prodSigma2 * twoPi);
         } else {
             float nObsOfK = stats[statsOffset+0];
             p[k] = nObsOfK;
+            float sumD2XMuOverSigma2 = 0;
+            float prodSigma2 = 1;
             for (int c = 0; c < dimension; c++) {
                 float x = obs[iObs*dimension + c];
                 float sumC = stats[statsOffset+1+c];
@@ -77,8 +86,12 @@ __kernel void compute_updates(
                 // 
                 float mu = mu0Prime;
                 float sigma = sigma0Prime + fixedSigmaDiag[c];
-                p[k] *= gaussian(x, mu, sqrt(sigma));
+                //
+                float d = x - mu;
+                sumD2XMuOverSigma2 += d * d / sigma;
+                prodSigma2 *= sigma;
             }
+            p[k] *= exp(- sumD2XMuOverSigma2 / 2) / sqrt(prodSigma2 * twoPi);
         }
         sum += p[k];
     }
