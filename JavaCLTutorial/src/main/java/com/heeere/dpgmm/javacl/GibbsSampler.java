@@ -9,7 +9,6 @@ import com.heeere.dpgmm.utilities.Stats;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.commons.math.distribution.NormalDistributionImpl;
 import org.apache.commons.math.util.FastMath;
 
 /**
@@ -190,24 +189,21 @@ public class GibbsSampler extends ExperimentTrait {
             if (oldZ != -1) {
                 stats.get(oldZ).uncontribute(observations.getData(i));
             }
-            double[] drawTable = new double[stats.size() + 1];
+            double[] logDrawTable = new double[stats.size() + 1];
             // the part on DP proba
-            for (int k = 0; k < drawTable.length - 1; k++) {
-                drawTable[k] = stats.get(k).nObs;
+            for (int k = 0; k < logDrawTable.length - 1; k++) {
+                logDrawTable[k] = FastMath.log(stats.get(k).nObs);
             }
-            drawTable[drawTable.length - 1] = alpha;
+            logDrawTable[logDrawTable.length - 1] = FastMath.log(alpha);
             // the part on the observation likelihood
-            for (int k = 0; k < drawTable.length - 1; k++) {
-                //drawTable[k] *= stats.get(k).posteriorPredictive(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
-                drawTable[k] *= FastMath.exp(stats.get(k).logPosteriorPredictive(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag));
+            for (int k = 0; k < logDrawTable.length - 1; k++) {
+                logDrawTable[k] += stats.get(k).logPosteriorPredictive(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
             }
-            //drawTable[drawTable.length - 1] *= averageProbaFromPrior(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
-            drawTable[drawTable.length - 1] *= FastMath.exp(logAverageProbaFromPrior(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag));
+            logDrawTable[logDrawTable.length - 1] += logAverageProbaFromPrior(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
             // now draw from the table
-            double sum = sum(drawTable);
-            int newZ = Stats.drawFromProportionalMultinomial(drawTable, sum);
+            int newZ = Stats.drawFromLogProportionalMultinomialInPlace(logDrawTable);
             z[i] = newZ;
-            if (newZ == drawTable.length - 1) {
+            if (newZ == logDrawTable.length - 1) {
                 // new component
                 stats.add(new PerTopicTabling(dimension));
             }
