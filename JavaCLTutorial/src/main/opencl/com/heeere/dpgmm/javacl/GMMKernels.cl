@@ -1,14 +1,25 @@
 
 
 #define MAXTOPIC 1024
+#define TWO_PI 6.28318531
 
-int drawFromProportionalMultinomial(const float* prob, float rand) {
+static int drawFromProportionalMultinomial(const float* prob, float rand) {
     int i = 0;
     while (rand > prob[i]) {
         rand -= prob[i];
         i++;
     }
     return i;
+}
+
+static int drawFromLogProportionalMultinomialInPlaceWithMax(float* prob, int size, float maxLog, float rand01) {
+    float sum = 0;
+    for (int i = 0; i < size; i++) {
+        prob[i] = exp(prob[i] - maxLog);
+        sum += prob[i];
+    }
+    float rand = rand01*sum;
+    return drawFromProportionalMultinomial(prob, rand);
 }
 
 float basicGaussian(float x) {
@@ -49,11 +60,12 @@ __kernel void compute_updates(
     float sum = 0;
     for (int k = 0; k < MAXTOPIC; k++) p[k] = 0;
 
+    float maxLog = -MAXFLOAT;
     for (int k = 0; k < componentCount; k++) {
         int statsOffset = k*(1 + 2 * dimension);
         if (k == oldZ) {
             float nObsOfK = stats[statsOffset+0] - 1;
-            p[k] = nObsOfK;
+            p[k] = log(nObsOfK);
             for (int c = 0; c < dimension; c++) {
                 float x = obs[iObs*dimension + c];
                 float sumC = stats[statsOffset+1+c] - x;
@@ -63,11 +75,14 @@ __kernel void compute_updates(
                 // 
                 float mu = mu0Prime;
                 float sigma = sigma0Prime + fixedSigmaDiag[c];
-                p[k] *= gaussian(x, mu, sqrt(sigma));
+                //
+                float d = x - mu;
+                p[k] += -0.5 * log(sigma * TWO_PI);
+                p[k] += -0.5 * d * d / sigma;
             }
         } else {
             float nObsOfK = stats[statsOffset+0];
-            p[k] = nObsOfK;
+            p[k] = log(nObsOfK);
             for (int c = 0; c < dimension; c++) {
                 float x = obs[iObs*dimension + c];
                 float sumC = stats[statsOffset+1+c];
@@ -77,22 +92,28 @@ __kernel void compute_updates(
                 // 
                 float mu = mu0Prime;
                 float sigma = sigma0Prime + fixedSigmaDiag[c];
-                p[k] *= gaussian(x, mu, sqrt(sigma));
+                //
+                float d = x - mu;
+                p[k] += -0.5 * log(sigma * TWO_PI);
+                p[k] += -0.5 * d * d / sigma;
             }
         }
-        sum += p[k];
+        maxLog = max(maxLog, p[k]);
     }
     {
-        p[componentCount] = alpha;
+        p[componentCount] = log(alpha);
         for (int c = 0; c < dimension; c++) {
             float x = obs[iObs*dimension + c];
             float mu = hMu0[c];
             float sigma = hSigma0Diag[c] + fixedSigmaDiag[c];
-            p[componentCount] *= gaussian(x, mu, sqrt(sigma));
+            //
+            float d = x - mu;
+            p[componentCount] += -0.5 * log(sigma * TWO_PI);
+            p[componentCount] += -0.5 * d * d / sigma;
         }
-        sum += p[componentCount]*0.99f;
+        maxLog = max(maxLog, p[componentCount]);
     }
-    int newZ = drawFromProportionalMultinomial(p, rand[i]*sum);
+    int newZ = drawFromLogProportionalMultinomialInPlaceWithMax(p, componentCount+1, maxLog, rand[i]);
     updates[3*i+0] = iObs;
     updates[3*i+1] = oldZ;
     updates[3*i+2] = newZ;
