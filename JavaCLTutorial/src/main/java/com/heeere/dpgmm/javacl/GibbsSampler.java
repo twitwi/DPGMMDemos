@@ -90,6 +90,21 @@ public class GibbsSampler extends ExperimentTrait {
                 sumSquares[i] -= data[i] * data[i];
             }
         }
+        
+        public double logPosteriorPredictive(double[] data, double[] fixedSigmaDiag, double[] hMu0, double[] hSigma0Diag) {
+            double res = 0;
+            for (int c = 0; c < data.length; c++) {
+                double x = data[c];
+                double sigma0Prime = 1. / (1. / hSigma0Diag[c] + nObs * 1. / fixedSigmaDiag[c]);
+                double mu0Prime = sigma0Prime * (1. / hSigma0Diag[c] * hMu0[c] + nObs * 1. / fixedSigmaDiag[c] * sum[c] / nObs);
+                double mu = mu0Prime;
+                double sigma = sigma0Prime + fixedSigmaDiag[c];
+                double d = x - mu;
+                res += -0.5 * FastMath.log(sigma * 2 * FastMath.PI);
+                res += -0.5 * d * d / sigma;
+            }
+            return res;
+        }
 
         public double posteriorPredictive(double[] data, double[] fixedSigmaDiag, double[] hMu0, double[] hSigma0Diag) {
             /*
@@ -139,6 +154,19 @@ public class GibbsSampler extends ExperimentTrait {
         return res;
     }
 
+    private double logAverageProbaFromPrior(double[] data, double[] fixedSigmaDiag, double[] hMu0, double[] hSigma0Diag) {
+        double res = 0;
+        for (int c = 0; c < data.length; c++) {
+            double x = data[c];
+            double mu = hMu0[c];
+            double sigma = hSigma0Diag[c] + fixedSigmaDiag[c];
+            double d = x - mu;
+            res += -0.5 * FastMath.log(sigma * 2 * FastMath.PI);
+            res += -0.5 * d * d / sigma;
+        }
+        return res;
+    }
+
     public void init(Observations obs) {
         this.observations = obs;
         this.dimension = observations.getData(0).length;
@@ -170,9 +198,11 @@ public class GibbsSampler extends ExperimentTrait {
             drawTable[drawTable.length - 1] = alpha;
             // the part on the observation likelihood
             for (int k = 0; k < drawTable.length - 1; k++) {
-                drawTable[k] *= stats.get(k).posteriorPredictive(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
+                //drawTable[k] *= stats.get(k).posteriorPredictive(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
+                drawTable[k] *= FastMath.exp(stats.get(k).logPosteriorPredictive(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag));
             }
-            drawTable[drawTable.length - 1] *= averageProbaFromPrior(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
+            //drawTable[drawTable.length - 1] *= averageProbaFromPrior(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
+            drawTable[drawTable.length - 1] *= FastMath.exp(logAverageProbaFromPrior(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag));
             // now draw from the table
             double sum = sum(drawTable);
             int newZ = Stats.drawFromProportionalMultinomial(drawTable, sum);
