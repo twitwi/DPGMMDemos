@@ -26,12 +26,15 @@ object Main {
     val dim = 2
     val nGauss = 10
     val nSamples = 10000
-    //val (pyAlpha, pyD) = (.1, 0.)
-    //val (pyAlpha, pyD) = (.01, 0.1)
-    //val (pyAlpha, pyD) = (.001, 0.2)
-    //val (pyAlpha, pyD) = (.0001, 0.3)
-    //val (pyAlpha, pyD) = (.00001, 0.4)
-    val (pyAlpha, pyD) = (0, 0.5)
+    //val (pyAlpha, pyD) = (.1, 0.) // DP
+    //val (pyAlpha, pyD) = (.1, 0.1)
+    //val (pyAlpha, pyD) = (5., 0.) // DP
+    //val (pyAlpha, pyD) = (5., .5)
+    //val (pyAlpha, pyD) = (0., 0.2)
+    //val (pyAlpha, pyD) = (0., 0.3)
+    //val (pyAlpha, pyD) = (0., 0.4)
+    val (pyAlpha, pyD) = (0., 0.5)
+    //val (pyAlpha, pyD) = (0., 0.9)
     
     val hMu0 = Array.fill(dim)(.5)
     val hSigma0Diag = Array.fill(dim)(.15).map(square)
