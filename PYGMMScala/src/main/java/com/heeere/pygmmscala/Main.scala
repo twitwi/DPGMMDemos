@@ -32,8 +32,8 @@ object Main {
     //val (pyAlpha, pyD) = (5., .5)
     //val (pyAlpha, pyD) = (0., 0.2)
     //val (pyAlpha, pyD) = (0., 0.3)
-    //val (pyAlpha, pyD) = (0., 0.4)
-    val (pyAlpha, pyD) = (0., 0.5)
+    val (pyAlpha, pyD) = (0., 0.4)
+    //val (pyAlpha, pyD) = (0., 0.5)
     //val (pyAlpha, pyD) = (0., 0.9)
     
     val hMu0 = Array.fill(dim)(.5)

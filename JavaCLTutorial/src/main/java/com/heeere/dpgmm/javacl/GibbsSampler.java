@@ -9,7 +9,6 @@ import com.heeere.dpgmm.utilities.Stats;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.commons.math.distribution.NormalDistributionImpl;
 import org.apache.commons.math.util.FastMath;
 
 /**
@@ -90,6 +89,21 @@ public class GibbsSampler extends ExperimentTrait {
                 sumSquares[i] -= data[i] * data[i];
             }
         }
+        
+        public double logPosteriorPredictive(double[] data, double[] fixedSigmaDiag, double[] hMu0, double[] hSigma0Diag) {
+            double res = 0;
+            for (int c = 0; c < data.length; c++) {
+                double x = data[c];
+                double sigma0Prime = 1. / (1. / hSigma0Diag[c] + nObs * 1. / fixedSigmaDiag[c]);
+                double mu0Prime = sigma0Prime * (1. / hSigma0Diag[c] * hMu0[c] + nObs * 1. / fixedSigmaDiag[c] * sum[c] / nObs);
+                double mu = mu0Prime;
+                double sigma = sigma0Prime + fixedSigmaDiag[c];
+                double d = x - mu;
+                res += -0.5 * FastMath.log(sigma * 2 * FastMath.PI);
+                res += -0.5 * d * d / sigma;
+            }
+            return res;
+        }
 
         public double posteriorPredictive(double[] data, double[] fixedSigmaDiag, double[] hMu0, double[] hSigma0Diag) {
             /*
@@ -116,21 +130,38 @@ public class GibbsSampler extends ExperimentTrait {
                 double sigma = sigma0Prime + fixedSigmaDiag[c];
                 double d = x - mu;
                 sumD2XMuOverSigma2 += d * d / sigma;
-                prodSigma2 *= sigma;
+                prodSigma2 *= sigma * 2 * FastMath.PI;
             }
-            double res = FastMath.exp(- sumD2XMuOverSigma2 / 2) / Math.sqrt(prodSigma2 * 2 * FastMath.PI);
+            double res = FastMath.exp(-sumD2XMuOverSigma2 / 2) / Math.sqrt(prodSigma2);
             //*/
             return res;
         }
     }
 
     private double averageProbaFromPrior(double[] data, double[] fixedSigmaDiag, double[] hMu0, double[] hSigma0Diag) {
-        double res = 1;
+        double sumD2XMuOverSigma2 = 0;
+        double prodSigma2 = 1;
         for (int c = 0; c < data.length; c++) {
             double x = data[c];
             double mu = hMu0[c];
             double sigma = hSigma0Diag[c] + fixedSigmaDiag[c];
-            res *= Stats.evaluateGaussianWithVariance(x, mu, sigma);
+            double d = x - mu;
+            sumD2XMuOverSigma2 += d * d / sigma;
+            prodSigma2 *= sigma * 2 * FastMath.PI;
+        }
+        double res = FastMath.exp(-sumD2XMuOverSigma2 / 2) / Math.sqrt(prodSigma2);
+        return res;
+    }
+
+    private double logAverageProbaFromPrior(double[] data, double[] fixedSigmaDiag, double[] hMu0, double[] hSigma0Diag) {
+        double res = 0;
+        for (int c = 0; c < data.length; c++) {
+            double x = data[c];
+            double mu = hMu0[c];
+            double sigma = hSigma0Diag[c] + fixedSigmaDiag[c];
+            double d = x - mu;
+            res += -0.5 * FastMath.log(sigma * 2 * FastMath.PI);
+            res += -0.5 * d * d / sigma;
         }
         return res;
     }
@@ -158,22 +189,21 @@ public class GibbsSampler extends ExperimentTrait {
             if (oldZ != -1) {
                 stats.get(oldZ).uncontribute(observations.getData(i));
             }
-            double[] drawTable = new double[stats.size() + 1];
+            double[] logDrawTable = new double[stats.size() + 1];
             // the part on DP proba
-            for (int k = 0; k < drawTable.length - 1; k++) {
-                drawTable[k] = stats.get(k).nObs;
+            for (int k = 0; k < logDrawTable.length - 1; k++) {
+                logDrawTable[k] = FastMath.log(stats.get(k).nObs);
             }
-            drawTable[drawTable.length - 1] = alpha;
+            logDrawTable[logDrawTable.length - 1] = FastMath.log(alpha);
             // the part on the observation likelihood
-            for (int k = 0; k < drawTable.length - 1; k++) {
-                drawTable[k] *= stats.get(k).posteriorPredictive(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
+            for (int k = 0; k < logDrawTable.length - 1; k++) {
+                logDrawTable[k] += stats.get(k).logPosteriorPredictive(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
             }
-            drawTable[drawTable.length - 1] *= averageProbaFromPrior(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
+            logDrawTable[logDrawTable.length - 1] += logAverageProbaFromPrior(observations.getData(i), fixedSigmaDiag, hMu0, hSigma0Diag);
             // now draw from the table
-            double sum = sum(drawTable);
-            int newZ = Stats.drawFromProportionalMultinomial(drawTable, sum);
+            int newZ = Stats.drawFromLogProportionalMultinomialInPlace(logDrawTable);
             z[i] = newZ;
-            if (newZ == drawTable.length - 1) {
+            if (newZ == logDrawTable.length - 1) {
                 // new component
                 stats.add(new PerTopicTabling(dimension));
             }
@@ -200,5 +230,4 @@ public class GibbsSampler extends ExperimentTrait {
         }
         return res;
     }
-
 }

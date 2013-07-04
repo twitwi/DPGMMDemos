@@ -9,6 +9,7 @@ import com.heeere.dpgmm.utilities.Stats;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import org.apache.commons.math.distribution.NormalDistributionImpl;
 import org.apache.commons.math.util.FastMath;
 
@@ -43,10 +44,25 @@ public class GibbsSampler extends ExperimentTrait {
             stats.remove(stats.size() - 1);
         }
         for (int i = 0; i < z.length; i++) {
-            z[i] = remap[z[i]];
+            if (z[i] != -1) {
+                z[i] = remap[z[i]];
+            }
         }
         int to = stats.size();
         System.err.println("=========== CLEANUP DONE: " + from + " => " + to);
+    }
+
+    void killRandomComponent() {
+        //int k = new Random().nextInt(stats.size()); // equi
+        int k = z[new Random().nextInt(z.length)]; // based on weight
+        PerTopicTabling s = stats.get(k);
+        s.nObs = 0;
+        for (int i = 0; i < z.length; i++) {
+            if (z[i] == k) {
+                z[i] = -1;
+            }
+       }
+        cleanupEmptyComponents();
     }
 
     //
@@ -171,7 +187,9 @@ public class GibbsSampler extends ExperimentTrait {
         double[] weights = new double[stats.size()];
         double incr = 1. / observations.getSize();
         for (int oi = 0; oi < observations.getSize(); oi++) {
-            weights[z[oi]] += incr;
+            if (z[oi] != -1) {
+                weights[z[oi]] += incr;
+            }
         }
         return displayWeigtedTopics(this.getClass().getName(), observations, weights, copy(stats));
     }

@@ -68,6 +68,11 @@ public class Main {
             }
             w.addRenderable(g.getWeigtedTopicsDisplay().name("(" + iter + ")"));
             System.err.println(iter + " " + (System.currentTimeMillis() - start));
+            if (iter % 10 == 9) {
+                System.err.println("Killing component");
+                g.killRandomComponent();
+                w.addRenderable(g.getWeigtedTopicsDisplay().name("(" + iter + ") post KILL"));
+            }
         }
         for (int i = 0; i < 100; i++) {
             int dIter = 20;
