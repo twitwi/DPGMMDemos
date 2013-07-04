@@ -53,19 +53,22 @@ public class Main {
         g.init(g.observations);
 
         //TopicDistribution h = new TopicDistribution();
+        boolean display = true;
 
         long start = System.currentTimeMillis();
-        RenderableStackViewer w = new RenderableStackViewer();
-        w.title("Estimating topics").exitOnClose().show();
+        RenderableStackViewer w = null;
+        if (display) {
+            w = new RenderableStackViewer();
+            w.title("Estimating topics").exitOnClose().show();
+        }
 
         int iter = 1;
         g.doDirichletProcessEstimation(alpha, fixedSigmaDiag, hMu0, hSigma0Diag);
-        w.addRenderable(g.getWeigtedTopicsDisplay().name("(" + iter + ")"));
+        if (display) w.addRenderable(g.getWeigtedTopicsDisplay().name("(" + iter + ")"));
         System.err.println(iter + " " + (System.currentTimeMillis() - start));
 
-        boolean display = false;
-        boolean switchBack = false; // switch back to java every time for display?
-        //g.switchToOpenCL();
+        boolean switchBack = true; // switch back to java every time for display?
+        g.switchToOpenCL();
 
         for (int i = 0; i < 200; i++) {
             int dIter = 1;
@@ -78,7 +81,7 @@ public class Main {
                     g.switchBackToJava();
                     g.switchToOpenCL();
                 }
-                w.addRenderable(g.getWeigtedTopicsDisplay().name("(" + iter + ")"));
+                if (display) w.addRenderable(g.getWeigtedTopicsDisplay().name("(" + iter + ")"));
             }
             System.err.println(iter + " " + (System.currentTimeMillis() - start));
         }
