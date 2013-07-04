@@ -30,6 +30,13 @@ public class GibbsSamplerWithCL extends GibbsSampler {
     CLBuffer<Float> clStats = null;
     CLBuffer<Integer> clZ = null;
     int clComponentCount = -111;
+    
+    private int updateBlockSize = 10000;
+
+    public void setUpdateBlockSize(int updateBlockSize) {
+        this.updateBlockSize = updateBlockSize;
+    }
+    
 
     /*
      * = context.createFloatBuffer(CLMem.Usage.InputOutput, n), // a and b and
@@ -55,7 +62,7 @@ public class GibbsSamplerWithCL extends GibbsSampler {
             throw new IllegalStateException("In opencl mode but opencl not up to date...");
         }
         // do the iteration on the OpenCL device
-        final int nUpdates = 10000; // TODO avoid the need for the z size to be a multiple of this
+        final int nUpdates = updateBlockSize; // TODO avoid the need for the z size to be a multiple of this
         CLBuffer<Integer> clUpdates = context.createIntBuffer(CLMem.Usage.InputOutput, nUpdates * 3);
         //CLBuffer<Float> clDBG = context.createFloatBuffer(CLMem.Usage.InputOutput, nUpdates * GMMKernels.MAXTOPIC); // unfreed, just for testing
         CLBuffer<Float> clFixedSigmaDiag = cl(fixedSigmaDiag);
